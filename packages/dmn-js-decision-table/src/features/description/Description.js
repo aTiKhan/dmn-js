@@ -1,5 +1,7 @@
 import { isString } from 'min-dash';
 
+import { isAny } from 'dmn-js-shared/lib/util/ModelUtil';
+
 import {
   getNodeById
 } from '../cell-selection/CellSelectionUtil';
@@ -17,11 +19,12 @@ export default class Description {
 
   constructor(
       components, contextMenu, elementRegistry,
-      eventBus, modeling, renderer) {
+      eventBus, modeling, renderer, translate) {
 
     this._contextMenu = contextMenu;
     this._modeling = modeling;
     this._renderer = renderer;
+    this._translate = translate;
 
 
     eventBus.on('cell.click', LOWER_PRIORITY, (event) => {
@@ -37,13 +40,14 @@ export default class Description {
 
       const element = elementRegistry.get(id);
 
-      if (!element) {
+      if (!isAny(element, [ 'dmn:UnaryTests', 'dmn:LiteralExpression' ])) {
         return;
       }
 
       const description = getDescription(element);
 
       if (!description) {
+
         // prevent focus
         event.preventDefault();
       }
@@ -112,17 +116,17 @@ export default class Description {
               ? () => this.removeDescription(element)
               : () => this.addDescription(element);
 
-          const icon =
-            existingDescription
-              ? 'dmn-icon-clear'
-              : 'dmn-icon-plus';
-
           return (
             <div
               className={ `context-menu-group-entry ${ className }` }
               onClick={ onClick }>
-              <span className={ `context-menu-group-entry-icon ${ icon }` }></span>
-              { isString(description) ? 'Remove' : 'Add' } Description
+              {
+                isString(description)
+                  ?
+                  this._translate('Remove Cell Description')
+                  :
+                  this._translate('Add Cell Description')
+              }
             </div>
           );
         }
@@ -168,7 +172,8 @@ Description.$inject = [
   'elementRegistry',
   'eventBus',
   'modeling',
-  'renderer'
+  'renderer',
+  'translate'
 ];
 
 // helpers //////////

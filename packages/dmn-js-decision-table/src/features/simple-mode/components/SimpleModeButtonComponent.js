@@ -2,6 +2,8 @@ import { Component } from 'inferno';
 
 import { assign } from 'min-dash';
 
+import { closest as domClosest } from 'min-dom';
+
 import {
   getNodeById
 } from '../../cell-selection/CellSelectionUtil';
@@ -25,7 +27,9 @@ export default class SimpleModeButtonComponent extends Component {
     const { injector } = context;
 
     const eventBus = this._eventBus = injector.get('eventBus'),
-          simpleMode = injector.get('simpleMode');
+          simpleMode = injector.get('simpleMode'),
+          elementRegistry = context.injector.get('elementRegistry'),
+          expressionLanguages = context.injector.get('expressionLanguages');
 
     this._renderer = injector.get('renderer');
 
@@ -33,7 +37,9 @@ export default class SimpleModeButtonComponent extends Component {
 
     this.updatePosition = this.updatePosition.bind(this);
 
-    eventBus.on('selection.changed', ({ selection }) => {
+    eventBus.on('cellSelection.changed', ({ elementId }) => {
+      const selection = elementRegistry.get(elementId);
+
       if (!selection || !simpleMode.canSimpleEdit(selection)) {
         this.setState({
           isVisible: false
@@ -42,8 +48,6 @@ export default class SimpleModeButtonComponent extends Component {
         return;
       }
 
-      var isDisabled;
-
       this.setState({
         isVisible: true,
         selection
@@ -51,11 +55,9 @@ export default class SimpleModeButtonComponent extends Component {
 
       const expressionLanguage = getExpressionLanguage(selection);
 
-      if (isDefaultExpressionLanguage(selection, expressionLanguage)) {
-        isDisabled = false;
-      } else {
-        isDisabled = true;
-      }
+      const isDisabled = !isDefaultExpressionLanguage(
+        selection, expressionLanguage, expressionLanguages
+      );
 
       this.setState({
         isVisible: true,
@@ -71,11 +73,14 @@ export default class SimpleModeButtonComponent extends Component {
   updatePosition() {
     const { selection } = this.state;
 
-    if (!selection || !this.node) {
+    const { node } = this;
+
+    if (!selection || !node) {
       return;
     }
 
-    const container = this._container = this._renderer.getContainer();
+    const container = this._renderer.getContainer(),
+          containerBounds = container.getBoundingClientRect();
 
     const cellNode = getNodeById(selection.id, container);
 
@@ -83,49 +88,64 @@ export default class SimpleModeButtonComponent extends Component {
 
     const nodeBounds = this.node.getBoundingClientRect();
 
-    const containerBounds = container.getBoundingClientRect();
-
-    const { scrollLeft, scrollTop } = container;
+    const { scrollLeft, scrollTop } = getTableContainerScroll(node);
 
     const nodePosition = {};
 
     if (cellBounds.left + (cellBounds.width / 2) > containerBounds.width / 2) {
+
+      // left
       nodePosition.left =
-        (window.scrollX
-        - containerBounds.left
+        (-containerBounds.left
         + cellBounds.left
         - nodeBounds.width
         + OFFSET
         + scrollLeft)
         + 'px';
+
+      node.classList.remove('right');
+      node.classList.add('left');
     } else {
+
+      // right
       nodePosition.left =
-        (window.scrollX
-        - containerBounds.left
+        (-containerBounds.left
         + cellBounds.left
         + cellBounds.width
         - OFFSET
         + scrollLeft)
         + 'px';
+
+      node.classList.remove('left');
+      node.classList.add('right');
     }
 
     if (cellBounds.top + (cellBounds.height / 2) > containerBounds.height / 2) {
+
+      // bottom
       nodePosition.top =
-        (window.scrollY
-        - containerBounds.top
+        (-containerBounds.top
         + cellBounds.top
         - nodeBounds.height
         + OFFSET
         + scrollTop)
         + 'px';
+
+      node.classList.remove('top');
+      node.classList.add('bottom');
+
     } else {
+
+      // top
       nodePosition.top =
-        (window.scrollY
-        - containerBounds.top
+        (-containerBounds.top
         + cellBounds.top
         - OFFSET
         + scrollTop)
         + 'px';
+
+      node.classList.remove('bottom');
+      node.classList.add('top');
     }
 
     assign(this.node.style, nodePosition);
@@ -193,10 +213,33 @@ function getExpressionLanguage(cell) {
   return cell.businessObject.expressionLanguage;
 }
 
-function isDefaultExpressionLanguage(cell, expressionLanguage) {
+function isDefaultExpressionLanguage(cell, expressionLanguage, expressionLanguages) {
+  return !expressionLanguage ||
+    expressionLanguage === getDefaultExpressionLanguage(cell, expressionLanguages);
+}
+
+function getDefaultExpressionLanguage(cell, expressionLanguages) {
   if (isInput(cell.col)) {
-    return !expressionLanguage || expressionLanguage === 'feel';
+    return expressionLanguages.getDefault('inputCell').value;
   } else if (isOutput(cell.col)) {
-    return !expressionLanguage || expressionLanguage === 'juel';
+    return expressionLanguages.getDefault('outputCell').value;
   }
+}
+
+function getTableContainerScroll(node) {
+  const tableContainer = domClosest(node, '.tjs-table-container');
+
+  if (!tableContainer) {
+    return {
+      scrollTop: 0,
+      scrollLeft: 0
+    };
+  }
+
+  const { scrollLeft, scrollTop } = tableContainer;
+
+  return {
+    scrollTop,
+    scrollLeft
+  };
 }

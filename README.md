@@ -1,8 +1,11 @@
+> __Starting with `dmn-js@8` the library displays and saves DMN 1.3 diagrams only.__ To open older DMN files, [migrate them](https://github.com/bpmn-io/dmn-migrate) before loading them with `dmn-js`.
+
+
 # dmn-js - DMN for the web
 
-[![Build Status](https://travis-ci.org/bpmn-io/dmn-js.svg?branch=develop)](https://travis-ci.org/bpmn-io/dmn-js)
+[![CI](https://github.com/bpmn-io/dmn-js/workflows/CI/badge.svg)](https://github.com/bpmn-io/dmn-js/actions?query=workflow%3ACI)
 
-View and edit DMN 1.1 diagrams in the browser.
+View and edit DMN 1.3 diagrams in the browser.
 
 
 ## Installation
@@ -15,10 +18,10 @@ into your node-style web-application.
 ## Usage
 
 To get started, create a [dmn-js](https://github.com/bpmn-io/dmn-js) instance
-and render [DMN 1.1 diagrams](http://www.omg.org/spec/DMN/About-DMN/) in the browser:
+and render [DMN 1.3 diagrams](http://www.omg.org/spec/DMN/About-DMN/) in the browser:
 
 ```javascript
-var xml; // my DMN 1.1 xml
+var xml; // my DMN 1.3 xml
 var viewer = new DmnJS({
   container: 'body'
 });
@@ -76,17 +79,25 @@ Run tests in individual [packages](./packages):
 npm run dev -- dmn-js
 ```
 
-Please checkout our [contributing guidelines](./.github/CONTRIBUTING.md) if you plan to
-file an issue or pull request.
-
 
 ## Related
 
 dmn-js builds on top of a few additional powerful tools:
 
-* [dmn-moddle](https://github.com/bpmn-io/dmn-moddle): Read / write support for DMN 1.1 XML
+* [dmn-moddle](https://github.com/bpmn-io/dmn-moddle): Read / write support for DMN 1.3 XML
 * [diagram-js](https://github.com/bpmn-io/diagram-js): Diagram rendering and editing toolkit
 * [table-js](https://github.com/bpmn-io/table-js): Table rendering and editing toolkit
+
+
+## Contributing
+
+Please checkout our [contributing guidelines](./.github/CONTRIBUTING.md) if you plan to
+file an issue or pull request.
+
+
+## Code of Conduct
+
+By participating to this project, please uphold to our [Code of Conduct](https://github.com/bpmn-io/.github/blob/master/.github/CODE_OF_CONDUCT.md).
 
 
 ## License

@@ -72,6 +72,28 @@ describe('components/ContentEditable', function() {
   });
 
 
+  it('should render placeholder', function() {
+
+    // given
+    const placeholder = 'placeholder';
+
+    // when
+    const node = renderToNode(
+      <ContentEditable
+        className={ 'other' }
+        value={ '' }
+        placeholder={ placeholder }
+      />
+    );
+
+    // then
+    expect(node).to.exist;
+    expect(innerText(node)).to.eql('');
+
+    expect(matches(node, '.content-editable--with-placeholder.other')).to.be.true;
+  });
+
+
   describe('selection', function() {
 
     it('should update on value change', function() {
@@ -206,9 +228,44 @@ describe('components/ContentEditable', function() {
     });
 
 
+    describe('singleLine', function() {
+
+      it('should NOT insert newline on Enter', function() {
+
+        // given
+        const node = renderToNode(
+          <ContentEditable
+            singleLine
+            onInput={ onInput }
+            value={ 'FOO' } />
+        );
+
+        setRange(node, { start: 1, end: 1 });
+
+        // when
+        const execDefault = triggerKeyEvent(node, 'keydown', {
+          which: ENTER_KEY
+        });
+
+        // then
+        expect(execDefault).to.be.false;
+
+        expect(onInput).not.to.have.been.called;
+        expect(globalOnKeydown).to.have.been.called;
+      });
+
+
+      // Cannot be tested due to paste events not affecting document's contents per
+      // default.
+      // Cf. https://developer.mozilla.org/en-US/docs/Web/API/Element/paste_event
+      it.skip('should NOT insert newline on paste');
+    });
+
+
     describe('ctrlForNewline = false', function() {
 
       it('should insert newline', function() {
+
         // given
         const node = renderToNode(
           <ContentEditable
@@ -236,6 +293,7 @@ describe('components/ContentEditable', function() {
     describe('ctrlForNewline = true', function() {
 
       it('should insert newline', function() {
+
         // given
         const node = renderToNode(
           <ContentEditable
@@ -261,6 +319,7 @@ describe('components/ContentEditable', function() {
 
 
       it('should insert newline / metaKey', function() {
+
         // given
         const node = renderToNode(
           <ContentEditable
@@ -286,6 +345,7 @@ describe('components/ContentEditable', function() {
 
 
       it('should ignore + prevent default without CTRL', function() {
+
         // given
         const node = renderToNode(
           <ContentEditable

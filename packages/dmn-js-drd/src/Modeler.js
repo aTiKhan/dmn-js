@@ -2,6 +2,27 @@ import inherits from 'inherits';
 
 import NavigatedViewer from './NavigatedViewer';
 
+import AlignElementsModule from 'diagram-js/lib/features/align-elements';
+import AutoPlaceModule from './features/auto-place';
+import AutoScrollModule from 'diagram-js/lib/features/auto-scroll';
+import BendpointsModule from 'diagram-js/lib/features/bendpoints';
+import ContextPadModule from './features/context-pad';
+import ConnectPreviewModule from 'diagram-js/lib/features/connection-preview';
+import DefinitionPropertiesModule from './features/definition-properties/modeler';
+import DistributeElementsModule from './features/distribute-elements';
+import EditorActionsModule from './features/editor-actions';
+import GenerateDiModule from './features/generate-di';
+import GridSnappingModule from 'diagram-js/lib/features/grid-snapping';
+import KeyboardModule from './features/keyboard';
+import KeyboardMoveModule from 'diagram-js/lib/navigation/keyboard-move';
+import KeyboardMoveSelectionModule from 'diagram-js/lib/features/keyboard-move-selection';
+import LabelEditingModule from './features/label-editing';
+import ModelingModule from './features/modeling';
+import MoveModule from 'diagram-js/lib/features/move';
+import PaletteModule from './features/palette';
+import ResizeModule from 'diagram-js/lib/features/resize';
+import SnappingModule from './features/snapping';
+
 /**
  * A modeler for DMN tables.
  *
@@ -69,8 +90,8 @@ import NavigatedViewer from './NavigatedViewer';
  * @param {Object} [options] configuration options to pass to the viewer
  * @param {DOMElement} [options.container]
  *        the container to render the viewer in, defaults to body.
- * @param {String|Number} [options.width] the width of the viewer
- * @param {String|Number} [options.height] the height of the viewer
+ * @param {string|number} [options.width] the width of the viewer
+ * @param {string|number} [options.height] the height of the viewer
  * @param {Object} [options.moddleExtensions]
  *        extension packages to provide
  * @param {Array<didi.Module>} [options.modules]
@@ -90,35 +111,29 @@ inherits(Modeler, NavigatedViewer);
 // - viewer + navigation modules
 // - modeling modules
 
-import BendpointsModule from 'diagram-js/lib/features/bendpoints';
-import ContextPadModule from './features/context-pad';
-import ConnectPreviewModule from 'diagram-js/lib/features/connection-preview';
-import DefinitionPropertiesModule from './features/definition-properties/modeler';
-import EditorActionsModule from './features/editor-actions';
-import GenerateDiModule from './features/generate-di';
-import KeyboardModule from './features/keyboard';
-import KeyboardMoveModule from 'diagram-js/lib/navigation/keyboard-move';
-import KeyboardMoveSelectionModule from 'diagram-js/lib/features/keyboard-move-selection';
-import LabelEditingModule from './features/label-editing';
-import ModelingModule from './features/modeling';
-import MoveModule from 'diagram-js/lib/features/move';
-import PaletteModule from './features/palette';
-
 Modeler.prototype._modelingModules = [
+
   // modeling components
+  AlignElementsModule,
+  AutoPlaceModule,
+  AutoScrollModule,
   BendpointsModule,
   ContextPadModule,
   ConnectPreviewModule,
   DefinitionPropertiesModule,
+  DistributeElementsModule,
   EditorActionsModule,
   GenerateDiModule,
+  GridSnappingModule,
   KeyboardModule,
   KeyboardMoveModule,
   KeyboardMoveSelectionModule,
   LabelEditingModule,
   ModelingModule,
   MoveModule,
-  PaletteModule
+  PaletteModule,
+  ResizeModule,
+  SnappingModule
 ];
 
 Modeler.prototype._modules = [].concat(

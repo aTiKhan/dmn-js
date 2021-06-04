@@ -25,7 +25,19 @@ insertCSS('dmn-js-decision-table-controls.css',
 );
 
 insertCSS('dmn-js-testing.css',
-  '.test-container .dmn-js-parent { height: 576px; }' +
-  '.dmn-decision-table-container { min-height: 400px; overflow: scroll }' +
-  '.tjs-container { display: table }'
+  `.test-container {
+    display: flex;
+    flex-direction: column;
+  }
+  .test-container .test-content-container {
+    flex-grow: 1;
+    overflow: hidden;
+    width: auto;
+    height: auto;
+    padding: 10px;
+  }
+  .test-container .dmn-js-parent {
+    height: 400px;
+    width: 800px
+  }`
 );

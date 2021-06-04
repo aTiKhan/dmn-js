@@ -13,7 +13,10 @@ var PROVIDERS = [
     matches: function(el) {
       var businessObject = el.businessObject;
 
-      return is(businessObject, 'dmn:Decision') && businessObject.decisionTable;
+      return (
+        is(businessObject, 'dmn:Decision') &&
+        is(businessObject.decisionLogic, 'dmn:DecisionTable')
+      );
     }
   },
   {
@@ -21,7 +24,10 @@ var PROVIDERS = [
     matches: function(el) {
       var businessObject = el.businessObject;
 
-      return is(businessObject, 'dmn:Decision') && businessObject.literalExpression;
+      return (
+        is(businessObject, 'dmn:Decision') &&
+        is(businessObject.decisionLogic, 'dmn:LiteralExpression')
+      );
     }
   }
 ];
@@ -29,7 +35,7 @@ var PROVIDERS = [
 
 /**
  * Displays overlays that can be clicked in order to drill
- * down into a DMN 1.1 element.
+ * down into a DMN element.
  */
 export default class DrillDown {
 
@@ -116,7 +122,7 @@ export default class DrillDown {
    *
    * @param  {djs.model.Base} element
    *
-   * @return {Boolean} whether drill down was executed
+   * @return {boolean} whether drill down was executed
    */
   drillDown(element) {
 

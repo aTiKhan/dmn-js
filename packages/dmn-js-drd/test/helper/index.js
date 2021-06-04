@@ -43,6 +43,7 @@ function bootstrapDmnJS(DmnJS, diagram, options, locals) {
   return function(done) {
 
     var testContainer;
+
     // Make sure the test container is an optional dependency and we fall back
     // to an empty <div> if it does not exist.
     //
@@ -186,7 +187,7 @@ export function injectAsync(doneFn) {
  *
  * });
  *
- * @param  {String} xml document to display
+ * @param  {string} xml document to display
  * @param  {Object} [options]
  *         optional options to be passed to the diagram upon instantiation
  * @param  {Object|Function} locals
@@ -218,7 +219,7 @@ export function bootstrapModeler(diagram, options, locals) {
  *
  * });
  *
- * @param  {String} xml document to display
+ * @param  {string} xml document to display
  * @param  {Object} [options]
  *         optional options to be passed to the diagram upon instantiation
  * @param  {Object|Function} locals

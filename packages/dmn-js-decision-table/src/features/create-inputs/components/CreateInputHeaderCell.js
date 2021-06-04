@@ -20,15 +20,14 @@ export default class CreateInputsHeaderCell extends Component {
       <th
         className="input-cell create-inputs header actionable"
         onClick={ this.onClick }
-        rowspan="3"
-        title="Add Input">
-        Input <span
+        title={ this.translate('Add Input') }>
+        { this.translate('Input') } <span
           className="add-input dmn-icon-plus action-icon"
-          title="Add Input"
+          title={ this.translate('Add Input') }
         ></span>
       </th>
     );
   }
 }
 
-CreateInputsHeaderCell.$inject = [ 'editorActions' ];
+CreateInputsHeaderCell.$inject = [ 'editorActions', 'translate' ];

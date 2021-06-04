@@ -25,7 +25,7 @@ import {
 
 
 /**
- * A viewer for DMN 1.1 diagrams.
+ * A viewer for DMN diagrams.
  *
  * Have a look at {@link NavigatedViewer} or {@link Modeler} for bundles that include
  * additional features.
@@ -87,7 +87,7 @@ export default function Viewer(options) {
 inherits(Viewer, Diagram);
 
 /**
- * Export the currently displayed DMN 1.1 diagram as
+ * Export the currently displayed DMN diagram as
  * an SVG image.
  *
  * @param {Object} [options]
@@ -147,8 +147,8 @@ Viewer.prototype.destroy = function() {
  *
  * Remove a previously added listener via {@link #off(event, callback)}.
  *
- * @param {String} event
- * @param {Number} [priority]
+ * @param {string} event
+ * @param {number} [priority]
  * @param {Function} callback
  * @param {Object} [that]
  */
@@ -159,7 +159,7 @@ Viewer.prototype.on = function(event, priority, callback, target) {
 /**
  * De-register an event listener
  *
- * @param {String} event
+ * @param {string} event
  * @param {Function} callback
  */
 Viewer.prototype.off = function(event, callback) {
@@ -209,7 +209,7 @@ Viewer.prototype._init = function(container, options) {
 /**
  * Emit an event on the underlying {@link EventBus}
  *
- * @param  {String} type
+ * @param  {string} type
  * @param  {Object} event
  *
  * @return {Object} event processing result (if any)
@@ -233,6 +233,7 @@ Viewer.prototype.open = function(definitions, done) {
   try {
 
     if (this._definitions) {
+
       // clear existing rendered diagram
       this.clear();
     }
@@ -326,15 +327,13 @@ import {
  * @param {Element} container
  */
 function addProjectLogo(container) {
-  var img = BPMNIO_IMG;
-
   var linkMarkup =
     '<a href="http://bpmn.io" ' +
        'target="_blank" ' +
        'class="bjs-powered-by" ' +
        'title="Powered by bpmn.io" ' +
-       'style="position: absolute; bottom: 15px; right: 15px; z-index: 100">' +
-      img +
+       'style="position: absolute; bottom: 15px; right: 15px; z-index: 100;">' +
+      BPMNIO_IMG +
     '</a>';
 
   var linkElement = domify(linkMarkup);

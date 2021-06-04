@@ -50,7 +50,7 @@ export default class ContentEditable extends Component {
     if (isIE()) {
 
       // onInput shim for IE <= 11
-      this.onPaste = this.onKeypress = (event) => {
+      this.onInputIEPolyfill = (event) => {
 
         var oldText = this.node.innerHTML;
 
@@ -106,7 +106,7 @@ export default class ContentEditable extends Component {
     setRange(node, newRange);
   }
 
-  onFocus = () => {
+  onFocus = event => {
     var propsFocus = this.props.onFocus;
 
     this.setState({
@@ -114,11 +114,11 @@ export default class ContentEditable extends Component {
     });
 
     if (typeof propsFocus === 'function') {
-      propsFocus();
+      propsFocus(event);
     }
   }
 
-  onBlur = () => {
+  onBlur = event => {
     var propsBlur = this.props.onBlur;
 
     this.setState({
@@ -126,11 +126,12 @@ export default class ContentEditable extends Component {
     });
 
     if (typeof propsBlur === 'function') {
-      propsBlur();
+      propsBlur(event);
     }
   }
 
   onKeydown = (event) => {
+
     // enter
     if (event.which === 13) {
 
@@ -138,6 +139,10 @@ export default class ContentEditable extends Component {
       event.preventDefault();
 
       if (this.props.ctrlForNewline && !isCmd(event)) {
+        return;
+      }
+
+      if (this.props.singleLine) {
         return;
       }
 
@@ -163,17 +168,48 @@ export default class ContentEditable extends Component {
     propsInput(text);
   }
 
-  // stubs for modern browsers; actual implementation
-  // for IE 11 to polyfill missing <input> event on [contentediable]
-  onPaste = noop;
-  onKeypress = noop;
+  // TODO(barmac): remove once we drop IE 11 support
+  onKeyPress = (event) => {
+    if (this.onInputIEPolyfill) {
+      this.onInputIEPolyfill(event);
+    }
+  }
 
+  onPaste = (event) => {
+
+    // TODO(barmac): remove once we drop IE 11 support
+    if (this.onInputIEPolyfill) {
+      this.onInputIEPolyfill(event);
+    }
+
+    if (this.props.singleLine) {
+      const text = (event.clipboardData || window.clipboardData).getData('text');
+
+      // replace newline with space
+      document.execCommand('insertText', false, text.replace(/\n/g, ' '));
+      event.preventDefault();
+    }
+  }
+
+  getClassName() {
+    const {
+      className,
+      placeholder,
+      value
+    } = this.props;
+
+    return [
+      className || '',
+      'content-editable',
+      (!value && placeholder) ? 'content-editable--with-placeholder' : ''
+    ].join(' ');
+  }
 
   render(props) {
 
     var {
       value,
-      className
+      placeholder
     } = props;
 
     // QUIRK: must add trailing <br/> for line
@@ -184,9 +220,10 @@ export default class ContentEditable extends Component {
 
     return (
       <div
-        className={ [ className || '', 'content-editable' ].join(' ') }
+        className={ this.getClassName() }
         contentEditable="true"
         spellcheck="false"
+        data-placeholder={ placeholder || '' }
         onInput={ this.onInput }
         onKeypress={ this.onKeypress }
         onPaste={ this.onPaste }
@@ -205,6 +242,7 @@ function brTag() {
 }
 
 function innerText(node) {
+
   // QUIRK: we must remove the last trailing <br/>, if any
   return node.innerText.replace(/\n$/, '');
 }
@@ -236,14 +274,14 @@ function insertLineBreak() {
   applyRange(newRange);
 }
 
-function noop() { }
-
 function isIE() {
   var ua = window.navigator.userAgent;
 
   return (
+
     // IE 10 or older
     ua.indexOf('MSIE ') > 0 ||
+
     // IE 11
     ua.indexOf('Trident/') > 0
   );

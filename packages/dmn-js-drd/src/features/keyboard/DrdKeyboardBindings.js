@@ -35,7 +35,7 @@ DrdKeyboardBindings.prototype.registerBindings = function(keyboard, editorAction
    * Add keyboard binding if respective editor action
    * is registered.
    *
-   * @param {String} action name
+   * @param {string} action name
    * @param {Function} fn that implements the key binding
    */
   function addListener(action, fn) {
@@ -70,6 +70,23 @@ DrdKeyboardBindings.prototype.registerBindings = function(keyboard, editorAction
 
     if (keyboard.isKey(['l', 'L'], event)) {
       editorActions.trigger('lassoTool');
+
+      return true;
+    }
+  });
+
+  // activate hand tool
+  // H
+  addListener('handTool', function(context) {
+
+    var event = context.keyEvent;
+
+    if (keyboard.hasModifier(event)) {
+      return;
+    }
+
+    if (keyboard.isKey(['h', 'H'], event)) {
+      editorActions.trigger('handTool');
 
       return true;
     }

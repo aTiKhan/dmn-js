@@ -14,11 +14,16 @@ import {
   is
 } from 'dmn-js-shared/lib/util/ModelUtil';
 
+import autoPlaceModule from 'src/features/auto-place';
 import contextPadModule from 'src/features/context-pad';
 import coreModule from 'src/core';
-import modelingModule from 'src/features/modeling';
 import createModule from 'diagram-js/lib/features/create';
 import customRulesModule from '../../../util/custom-rules';
+import modelingModule from 'src/features/modeling';
+
+import {
+  createCanvasEvent as canvasEvent
+} from '../../../util/MockEvents';
 
 
 describe('features - context-pad', function() {
@@ -203,13 +208,14 @@ describe('features - context-pad', function() {
     it('should provide entries for Decision', inject(function() {
 
       expectContextPadEntries('guestCount', [
-        'connect',
-        'replace',
-        'delete',
-        'append.knowledge-source',
+        'append.business-knowledge-model',
+        'append.decision',
         'append.input-data',
+        'append.knowledge-source',
         'append.text-annotation',
-        'append.decision'
+        'connect',
+        'delete',
+        'replace'
       ]);
     }));
 
@@ -217,11 +223,9 @@ describe('features - context-pad', function() {
     it('should provide entries for InputData', inject(function() {
 
       expectContextPadEntries('dayType_id', [
-        'connect',
-        'delete',
         'append.text-annotation',
-        'append.knowledge-source',
-        'append.decision'
+        'connect',
+        'delete'
       ]);
     }));
 
@@ -229,12 +233,11 @@ describe('features - context-pad', function() {
     it('should provide entries for KnowledgeSource', inject(function() {
 
       expectContextPadEntries('host_ks', [
-        'connect',
-        'delete',
-        'append.text-annotation',
+        'append.input-data',
         'append.knowledge-source',
-        'append.decision',
-        'append.business-knowledge-model'
+        'append.text-annotation',
+        'connect',
+        'delete'
       ]);
     }));
 
@@ -242,11 +245,11 @@ describe('features - context-pad', function() {
     it('should provide entries for BusinessKnowledgeModel', inject(function() {
 
       expectContextPadEntries('elMenu', [
-        'connect',
-        'delete',
+        'append.business-knowledge-model',
+        'append.knowledge-source',
         'append.text-annotation',
-        'append.decision',
-        'append.business-knowledge-model'
+        'connect',
+        'delete'
       ]);
     }));
 
@@ -254,11 +257,13 @@ describe('features - context-pad', function() {
     it('should provide entries for TextAnnotation', inject(function() {
 
       expectContextPadEntries('TextAnnotation_1t4zaz9', [
+        'connect',
         'delete'
       ]);
     }));
 
   });
+
 
   describe('replace', function() {
 
@@ -329,9 +334,129 @@ describe('features - context-pad', function() {
 
   });
 
+
+  describe('append', function() {
+
+    var diagramXML = require('./ContextPad.dmn');
+
+    beforeEach(bootstrapModeler(diagramXML, { modules: testModules }));
+
+
+    it('should append decision', inject(function(dragging, contextPad, elementRegistry) {
+
+      // given
+      var decision = elementRegistry.get('guestCount');
+
+      var incomingLength = decision.incoming.length;
+
+      // when
+      contextPad.open(decision);
+
+      contextPad.trigger('dragstart', padEvent('append.decision'));
+
+      dragging.move(canvasEvent({ x: decision.x, y: decision.y }));
+      dragging.hover({ element: decision.parent });
+      dragging.move(canvasEvent({ x: decision.x - 100, y: decision.y - 90 }));
+      dragging.end();
+
+      // then
+      expect(decision.incoming).to.have.length(incomingLength + 1);
+    }));
+
+  });
+
+
+  describe('auto place', function() {
+
+    var diagramXML = require('./ContextPad.dmn');
+
+    beforeEach(bootstrapModeler(diagramXML, {
+      modules: testModules.concat(autoPlaceModule)
+    }));
+
+
+    it('should trigger', inject(function(elementRegistry, contextPad) {
+
+      // given
+      var decision = elementRegistry.get('guestCount');
+
+      contextPad.open(decision);
+
+      // mock event
+      var event = padEvent('append.decision');
+
+      // when
+      contextPad.trigger('click', event);
+
+      // then
+      expect(decision.outgoing).to.have.length(1);
+    }));
+
+  });
+
+
+  describe('disabled auto-place', function() {
+
+    var diagramXML = require('./ContextPad.dmn');
+
+    beforeEach(bootstrapModeler(diagramXML, {
+      modules: testModules.concat(autoPlaceModule),
+      contextPad: {
+        autoPlace: false
+      }
+    }));
+
+    var container;
+
+    beforeEach(function() {
+      container = TestContainer.get(this);
+    });
+
+
+    it('should default to drag start', inject(
+      function(elementRegistry, contextPad, dragging) {
+
+        // given
+        var decision = elementRegistry.get('guestCount');
+
+        contextPad.open(decision);
+
+        // mock event
+        var event = {
+          clientX: 100,
+          clientY: 100,
+          target: padEntry(container, 'append.decision'),
+          preventDefault: function() {}
+        };
+
+        // when
+        contextPad.trigger('click', event);
+
+        // then
+        expect(dragging.context()).to.exist;
+      }
+    ));
+
+  });
+
 });
 
 
 function padEntry(element, name) {
   return domQuery('[data-action="' + name + '"]', element);
+}
+
+function padEvent(entry) {
+
+  return getDrdJS().invoke(function(overlays) {
+
+    var target = padEntry(overlays._overlayRoot, entry);
+
+    return {
+      target: target,
+      preventDefault: function() {},
+      clientX: 100,
+      clientY: 100
+    };
+  });
 }

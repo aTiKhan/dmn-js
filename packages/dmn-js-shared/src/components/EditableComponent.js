@@ -81,7 +81,7 @@ export default class EditableComponent extends Component {
     };
   }
 
-  onFocus = () => {
+  onFocus = event => {
     this.setState({
       focussed: true
     });
@@ -89,11 +89,11 @@ export default class EditableComponent extends Component {
     var { onFocus } = this.props;
 
     if (typeof onFocus === 'function') {
-      onFocus();
+      onFocus(event);
     }
   }
 
-  onBlur = (property) => {
+  onBlur = event => {
     this.setState({
       focussed: false
     });
@@ -110,16 +110,18 @@ export default class EditableComponent extends Component {
     const { onBlur } = this.props;
 
     if (typeof onBlur === 'function') {
-      onBlur();
+      onBlur(event);
     }
   }
 
   getClassName() {
     var {
-      className
+      className,
+      value
     } = this.props;
 
     var {
+      changing,
       focussed,
       invalid
     } = this.state;
@@ -134,13 +136,18 @@ export default class EditableComponent extends Component {
       className += ' invalid';
     }
 
+    if (!value && !changing) {
+      className += ' empty';
+    }
+
     return className;
   }
 
   getDisplayValue() {
 
     var {
-      value
+      value,
+      placeholder
     } = this.props;
 
     var {
@@ -153,7 +160,7 @@ export default class EditableComponent extends Component {
     }
 
     if (!value) {
-      value = focussed ? '' : '-';
+      value = focussed ? '' : (placeholder || '');
     }
 
     return value;

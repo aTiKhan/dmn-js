@@ -16,7 +16,14 @@ describe('Modeler', function() {
   });
 
   function createModeler(xml, done) {
-    modeler = new DrdModeler({ container: container });
+    modeler = new DrdModeler({
+      container: container,
+      drd: {
+        keyboard: {
+          bindTo: document
+        }
+      }
+    });
 
     modeler.importXML(xml, function(err, warnings) {
       done(err, warnings, modeler);
@@ -35,6 +42,7 @@ describe('Modeler', function() {
 
 
   it('should re-import simple DRD', function(done) {
+
     // given
     createModeler(exampleXML, function(err, warnings, modeler) {
 
@@ -74,6 +82,7 @@ describe('Modeler', function() {
         'import.render.complete',
         'import.done'
       ], function(e) {
+
         // log event type + event arguments
         events.push([
           e.type,
@@ -105,6 +114,7 @@ describe('Modeler', function() {
   describe('decisions without DI', function() {
 
     it('should generate ID', function(done) {
+
       // given
       createModeler(noDiXML, function(err, warnings, modeler) {
 
@@ -169,7 +179,10 @@ describe('Modeler', function() {
           'moveCanvas',
           'moveSelection',
           'selectElements',
+          'distributeElements',
+          'alignElements',
           'lassoTool',
+          'handTool',
           'directEditing'
         ];
 

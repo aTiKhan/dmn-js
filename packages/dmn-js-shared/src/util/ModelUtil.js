@@ -4,9 +4,9 @@ import { some } from 'min-dash';
  * Is an element of the given DMN type?
  *
  * @param  {tjs.model.Base|ModdleElement} element
- * @param  {String} type
+ * @param  {string} type
  *
- * @return {Boolean}
+ * @return {boolean}
  */
 export function is(element, type) {
   var bo = getBusinessObject(element);
@@ -51,9 +51,9 @@ export function getName(element) {
  * Return true if element has any of the given types.
  *
  * @param {djs.model.Base} element
- * @param {Array<String>} types
+ * @param {Array<string>} types
  *
- * @return {Boolean}
+ * @return {boolean}
  */
 export function isAny(element, types) {
   return some(types, function(t) {

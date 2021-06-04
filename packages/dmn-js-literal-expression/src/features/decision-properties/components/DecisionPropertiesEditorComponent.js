@@ -1,7 +1,5 @@
 import { Component } from 'inferno';
 
-import { validateId } from 'dmn-js-shared/lib/util/IdsUtil';
-
 import EditableComponent from 'dmn-js-shared/lib/components/EditableComponent';
 
 
@@ -51,34 +49,16 @@ export default class DecisionPropertiesEditorComponent extends Component {
     this._modeling.editDecisionName(name);
   }
 
-  setDecisionId = (id) => {
-    const oldId = this.getDecision().id;
-
-    if (oldId === id) {
-      return;
-    }
-
-    this._modeling.editDecisionId(id);
-  }
-
-  validateId = (id) => {
-    return validateId(this.getDecision(), id);
-  }
-
   render() {
-    const { name, id } = this.getDecision();
+    const { name } = this.getDecision();
 
     return (
       <header className="decision-properties">
         <DecisionName
           className="decision-name editor"
           value={ name }
+          onBlur={ resetScroll }
           onChange={ this.setDecisionName } />
-        <DecisionId
-          className="decision-id editor"
-          value={ id }
-          validate={ this.validateId }
-          onChange={ this.setDecisionId } />
       </header>
     );
   }
@@ -97,15 +77,6 @@ class DecisionName extends EditableComponent {
 
 }
 
-class DecisionId extends EditableComponent {
-
-  render() {
-
-    return (
-      <h5 className={ this.getClassName() }>
-        { this.getEditor() }
-      </h5>
-    );
-  }
-
+function resetScroll(event) {
+  event.target.scroll(0, 0);
 }

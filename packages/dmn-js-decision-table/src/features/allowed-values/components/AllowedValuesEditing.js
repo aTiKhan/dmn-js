@@ -17,6 +17,8 @@ export default class AllowedValuesEditing extends Component {
   constructor(props, context) {
     super(props, context);
 
+    this._translate = context.injector.get('translate');
+
     this._modeling = context.injector.get('modeling');
     this._changeSupport = context.changeSupport;
 
@@ -84,7 +86,7 @@ export default class AllowedValuesEditing extends Component {
   }
 
   getAllowedValuesTarget() {
-    const { element } = this.props.context;
+    const element = this.getElement();
 
     if (is(element, 'dmn:LiteralExpression')) {
       return element.$parent;
@@ -145,8 +147,12 @@ export default class AllowedValuesEditing extends Component {
     this.setPredefinedValues(null);
   }
 
+  getElement() {
+    return this.props.context.output || this.props.context.input.inputExpression;
+  }
+
   render() {
-    const { element } = this.props.context;
+    const element = this.getElement();
 
     const {
       inputValue,
@@ -156,56 +162,63 @@ export default class AllowedValuesEditing extends Component {
     return (
       element.typeRef === 'string' ?
         <div className="context-menu-container allowed-values-edit">
-          <hr className="dms-hrule" />
-          {
-            !isNull(values)
+          <div className="dms-form-control">
+            {
+              !isNull(values)
               && values.length > 0
               && <List
+                labelComponent={ Label }
                 items={ values }
                 onChange={ this.onListChange } />
-          }
+            }
 
-          {
-            !isNull(values)
+            {
+              !isNull(values)
               && !values.length
               && <div>
-                <h4 className="dms-heading">
-                  Predefined Values
-                </h4>
-                <span className="placeholder">No values</span>
+                <label className="dms-label">
+                  { this._translate('Predefined Values') }
+                </label>
+                <span className="placeholder">
+                  { this._translate('No values') }
+                </span>
               </div>
-          }
+            }
 
-          {
-            !isNull(values)
+            {
+              !isNull(values)
               && <p class="dms-hint">
-                <a href="#" className="del-values"
+                <button type="button" className="del-values"
                   onClick={ this.handleRemovePredifinedValuesClick }>
-                  Clear predefined values.
-                </a>
+                  { this._translate('Clear predefined values.') }
+                </button>
               </p>
-          }
+            }
 
-          <h4 className="dms-heading">
-            Add Predefined Values
-          </h4>
+            <label className="dms-label">
+              { this._translate('Add Predefined Values') }
+            </label>
 
-          <ValidatedInput
-            onInput={ this.onInput }
-            onKeyDown={ this.onKeyDown }
-            placeholder={ '"value", "value", ...' }
-            type="text"
-            validate={ value => {
-              if (!parseString(value)) {
-                return 'Strings must be in double quotes.';
-              }
-            } }
-            value={ inputValue } />
-
+            <ValidatedInput
+              onInput={ this.onInput }
+              onKeyDown={ this.onKeyDown }
+              placeholder={ '"value", "value", ...' }
+              type="text"
+              validate={ value => {
+                if (!parseString(value)) {
+                  return this._translate('Strings must be in double quotes.');
+                }
+              } }
+              value={ inputValue } />
+          </div>
         </div>
         : null
     );
   }
+}
+
+function Label(label) {
+  return <label className="dms-label">{ label }</label>;
 }
 
 

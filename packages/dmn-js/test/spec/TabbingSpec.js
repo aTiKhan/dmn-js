@@ -41,7 +41,6 @@ insertCSS('tabs.css', `
 
   .tjs-container,
   .viewer-container {
-    display: table;
     width: 100%;
     padding: 10px;
   }
@@ -91,6 +90,7 @@ const CLASS_NAMES = {
 };
 
 var diagramXML = require('./diagram.dmn');
+
 // var performanceXML = require('./performance.dmn');
 
 

@@ -15,6 +15,8 @@ export default class OutputCell extends Component {
     super(props, context);
 
     mixin(this, ComponentWithSlots);
+
+    this._translate = context.injector.get('translate');
   }
 
   onClick = (event) => {
@@ -58,40 +60,68 @@ export default class OutputCell extends Component {
   }
 
   render() {
-    const output = this.props.output;
+    const {
+      output,
+      index,
+      outputsLength
+    } = this.props;
 
-    var label = output.get('label');
-    var name = output.get('name');
+    const {
+      label,
+      name,
+      outputValues,
+      typeRef
+    } = output;
+
+    const width = output.width ? output.width + 'px' : '192px';
 
     return (
       <th
         data-col-id={ output.id }
-        onClick={ this.onClick }
+        onDoubleClick={ this.onClick }
         onContextmenu={ this.onContextmenu }
-        className="output-cell output-editor">
+        className="output-cell output-editor"
+        style={ { width } }
+      >
 
         {
           this.slotFills({
             type: 'cell-inner',
             context: {
               cellType: 'output-cell',
-              col: this._elementRegistry.get(output.id)
+              col: this._elementRegistry.get(output.id),
+              index,
+              outputsLength
             },
             col: output
           })
         }
 
+        <div className="clause">
+          { index === 0 ? this._translate('Then') : this._translate('And') }
+        </div>
+
         {
           label ? (
-            <span className="output-label" title="Output Label">
+            <div className="output-label" title={ this._translate('Output Label') }>
               { label }
-            </span>
+            </div>
           ) : (
-            <span className="output-name" title="Output Expression">
-              { name || '-' }
-            </span>
+            <div className="output-name" title={ this._translate('Output Name') }>
+              { name }
+            </div>
           )
         }
+
+        <div
+          className="output-variable"
+          title={
+            outputValues && outputValues.text ? this._translate('Output Values') :
+              this._translate('Output Type')
+          }
+        >
+          { outputValues && outputValues.text || typeRef }
+        </div>
       </th>
     );
   }

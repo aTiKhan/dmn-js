@@ -49,17 +49,15 @@ export default class OutputCellContextMenu extends Component {
 
     const { unsaved } = this.state;
 
-    return (unsaved && unsaved[attr]) || output.get(attr);
+    return unsaved && attr in unsaved ? unsaved[attr] : output.get(attr);
   }
 
   render() {
     return (
-      <div className="context-menu-container output-edit">
-        <OutputEditor
-          name={ this.getValue('name') }
-          label={ this.getValue('label') }
-          onChange={ this.handleChange } />
-      </div>
+      <OutputEditor
+        name={ this.getValue('name') }
+        label={ this.getValue('label') }
+        onChange={ this.handleChange } />
     );
   }
 }

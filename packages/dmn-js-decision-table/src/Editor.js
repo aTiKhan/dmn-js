@@ -12,7 +12,7 @@ import decisionTableHeadEditorModule from './features/decision-table-head/editor
 import dragAndDropModule from './features/drag-and-drop';
 import descriptionModule from './features/description';
 import expressionLanguageModule from './features/expression-language';
-import tableHeadEditorModule from './features/decision-table-head/editor';
+import expressionLanguagesModule from 'dmn-js-shared/lib/features/expression-languages';
 import tablePropertiesEditorModule from './features/decision-table-properties/editor';
 import editorActionsModule from 'table-js/lib/features/editor-actions';
 import hitPolicyEditorModule from './features/hit-policy/editor';
@@ -27,6 +27,7 @@ import simpleDateEditModule from './features/simple-date-edit';
 import simpleNumberEditModule from './features/simple-number-edit';
 import simpleStringEditModule from './features/simple-string-edit';
 import cellSelectionModule from './features/cell-selection';
+import columnResizeModule from './features/column-resize';
 
 
 export default class Editor extends Viewer {
@@ -50,11 +51,12 @@ export default class Editor extends Viewer {
       decisionTableContextMenu,
       decisionTableEditorActionsModule,
       decisionTableHeadEditorModule,
+      columnResizeModule,
       dragAndDropModule,
       descriptionModule,
       expressionLanguageModule,
+      expressionLanguagesModule,
       keyboardModule,
-      tableHeadEditorModule,
       tablePropertiesEditorModule,
       editorActionsModule,
       hitPolicyEditorModule,

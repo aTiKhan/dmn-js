@@ -36,13 +36,13 @@ export default class DecisionTableHead extends Component {
     this._changeSupport.onElementsChanged(root.id, this.onElementsChanged);
   }
 
-  componentWillUnmout() {
+  componentWillUnmount() {
     const root = this._sheet.getRoot();
 
     this._changeSupport.offElementsChanged(root.id, this.onElementsChanged);
   }
 
-  render(props) {
+  render() {
     const root = this._sheet.getRoot();
 
     if (!is(root, 'dmn:DMNElement')) {
@@ -56,6 +56,9 @@ export default class DecisionTableHead extends Component {
 
     return <thead>
       <tr>
+        <th
+          className="index-column"
+        />
 
         {
           this.slotFills({
@@ -65,83 +68,41 @@ export default class DecisionTableHead extends Component {
         }
 
         {
-          this.slotFill({
-            type: 'cell',
-            context: { cellType: 'input-label' }
-          }, DefaultInputLabel)
-        }
+          inputs && inputs.map((input, index) => {
+            const width = input.width || '192px';
 
-        {
-          this.slotFill({
-            type: 'cell',
-            context: { cellType: 'output-label' }
-          }, DefaultOutputLabel)
-        }
-
-        {
-          this.slotFills({
-            type: 'cell',
-            context: { cellType: 'after-label-cells' }
-          })
-        }
-      </tr>
-      <tr>
-        {
-          inputs && inputs.map(input => {
             return this.slotFill({
               type: 'cell',
               context: {
                 cellType: 'input-header',
-                input
+                input,
+                index,
+                inputsLength: inputs.length,
+                width
               },
               key: input.id
             }, DefaultInputHeaderCell);
           })
         }
         {
-          outputs.map(output => {
+          outputs.map((output, index) => {
             return this.slotFill({
               type: 'cell',
               context: {
                 cellType: 'output-header',
-                output
+                output,
+                index,
+                outputsLength: outputs.length
               },
               key: output.id
             }, DefaultOutputHeaderCell);
           })
         }
-      </tr>
-      <tr>
+
         {
-          inputs && inputs.map((input, index) => {
-
-            const {
-              inputExpression
-            } = input;
-
-            return this.slotFill({
-              type: 'cell',
-              context: {
-                cellType: 'input-header-type-ref',
-                element: inputExpression
-              },
-              className: 'input-cell',
-              key: input.id
-            }, DefaultTypeRefCell);
-          })
-        }
-        {
-          outputs.map(output => {
-
-            return this.slotFill({
-              type: 'cell',
-              context: {
-                cellType: 'output-header-type-ref',
-                element: output
-              },
-              className: 'output-cell',
-              key: output.id
-            }, DefaultTypeRefCell);
+          this.slotFills({
+            type: 'cell',
+            context: { cellType: 'after-label-cells' }
           })
         }
       </tr>
@@ -152,17 +113,21 @@ export default class DecisionTableHead extends Component {
 
 // default components ///////////////////////
 
-function DefaultInputHeaderCell(props) {
+function DefaultInputHeaderCell(props, context) {
 
   const {
     input,
-    className
+    className,
+    index
   } = props;
 
   const {
     label,
-    inputExpression
+    inputExpression,
+    inputValues
   } = input;
+
+  const translate = context.injector.get('translate');
 
   const actualClassName = (className || '') + ' input-cell';
 
@@ -171,127 +136,88 @@ function DefaultInputHeaderCell(props) {
       data-col-id={ input.id }
       className={ actualClassName }
       key={ input.id }>
+
+      <div className="clause">
+        { index === 0 ? translate('When') : translate('And') }
+      </div>
+
       {
         label ? (
-          <span className="input-label" title="Input Label">
+          <div className="input-label" title={ translate('Input Label') }>
             { label }
-          </span>
+          </div>
         ) : (
-          <span className="input-expression" title="Input Expression">
-            { inputExpression.text || '-' }
-          </span>
+          <div
+            className="input-expression"
+            title={ translate('Input Expression') }>
+            { inputExpression.text }
+          </div>
         )
       }
+
+      <div
+        className="input-variable"
+        title={
+          inputValues && inputValues.text ? translate('Input Values') :
+            translate('Input Type')
+        }
+      >
+        { inputValues && inputValues.text || inputExpression.typeRef }
+      </div>
     </th>
   );
 }
 
 
-class DefaultInputLabel extends Component {
-
-  constructor(props, context) {
-    super(props, context);
-
-    this._sheet = context.injector.get('sheet');
-  }
-
-  render() {
-
-    const root = this._sheet.getRoot(),
-          businessObject = root.businessObject;
-
-    const inputs = businessObject.input;
-
-    if (!inputs || !inputs.length) {
-      return null;
-    }
-
-    const colspan = businessObject.input.length;
-
-    return (
-      <th
-        className="input-cell inputs-label header"
-        colspan={ colspan }
-      >
-        Input
-      </th>
-    );
-  }
-
-}
-
-
-function DefaultOutputHeaderCell(props) {
+function DefaultOutputHeaderCell(props, context) {
 
   const {
     output,
-    className
+    className,
+    index
   } = props;
 
   const {
     label,
-    name
+    name,
+    outputValues,
+    typeRef
   } = output;
+
+  const translate = context.injector.get('translate');
 
   const actualClassName = (className || '') + ' output-cell';
 
   return (
     <th className={ actualClassName } key={ output.id }>
+
+      <div className="clause">
+        { index === 0 ? translate('Then') : translate('And') }
+      </div>
+
       {
         label ? (
-          <span className="output-label" title="Output Label">
+          <div className="output-label" title={ translate('Output Label') }>
             { label }
-          </span>
+          </div>
         ) : (
-          <span className="output-name" title="Output Name">
-            { name || '-' }
-          </span>
+          <div
+            className="output-name"
+            title={ translate('Output Name') }>
+            { name }
+          </div>
         )
       }
-    </th>
-  );
-}
 
-
-
-class DefaultOutputLabel extends Component {
-
-  constructor(props, context) {
-    super(props, context);
-
-    this._sheet = context.injector.get('sheet');
-  }
-
-  render() {
-    const root = this._sheet.getRoot(),
-          businessObject = root.businessObject,
-          colspan = businessObject.output.length;
-
-    return (
-      <th
-        className="output-cell outputs-label header"
-        colspan={ colspan }
+      <div
+        className="output-variable"
+        title={
+          outputValues && outputValues.text ? translate('Output Values') :
+            translate('Output Type')
+        }
       >
-        Output
-      </th>
-    );
-  }
-
-}
-
-
-function DefaultTypeRefCell(props) {
-
-  const {
-    className,
-    element
-  } = props;
-
-  const actualClassName = className + ' type-ref';
-
-  return (
-    <th className={ actualClassName } title="Data Type">
-      { element.typeRef }
+        { outputValues && outputValues.text || typeRef }
+      </div>
     </th>
   );
 }

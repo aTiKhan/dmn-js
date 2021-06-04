@@ -18,7 +18,8 @@ import {
   triggerClick,
   triggerInputEvent,
   triggerKeyEvent,
-  triggerFocusIn
+  triggerFocusIn,
+  triggerMouseEvent
 } from 'test/util/EventUtil';
 
 import InputSelect from 'src/components/InputSelect';
@@ -69,6 +70,29 @@ describe('components/InputSelect', function() {
   });
 
 
+  it('should use provided title', function() {
+
+    // given
+    const injector = createInjector({
+      keyboard: getKeyboardMock(testContainer),
+      renderer: getRendererMock(testContainer)
+    });
+    const title = 'Title';
+
+    // when
+    const renderedTree = renderIntoDocument(
+      <DiContainer injector={ injector }>
+        <InputSelect title={ title } />
+      </DiContainer>
+    );
+
+    // then
+    const element = findRenderedDOMElementWithClass(renderedTree, 'dms-input-select');
+
+    expect(element.getAttribute('title')).to.eql(title);
+  });
+
+
   describe('interaction', function() {
 
     let injector;
@@ -105,6 +129,34 @@ describe('components/InputSelect', function() {
       const options = findRenderedDOMElementWithClass(renderedTree, 'options');
 
       expect(options).to.exist;
+    });
+
+
+    it('should show options with correct position', function() {
+
+      // given
+      const renderedTree = renderIntoDocument(
+        <DiContainer injector={ injector }>
+          <InputSelect
+            options={ OPTIONS } />
+        </DiContainer>
+      );
+      const container = injector.get('renderer').getContainer();
+      container.style.transform = 'translate(2px)';
+
+      const inputSelect =
+        findRenderedDOMElementWithClass(renderedTree, 'dms-input-select');
+
+      // when
+      triggerClick(inputSelect);
+
+      // then
+      const options = findRenderedDOMElementWithClass(renderedTree, 'options');
+      const inputSelectBounds = inputSelect.getBoundingClientRect();
+      const optionsBounds = options.getBoundingClientRect();
+
+      expect(optionsBounds.top).to.eql(inputSelectBounds.height + inputSelectBounds.top);
+      expect(optionsBounds.left).to.eql(inputSelectBounds.left);
     });
 
 
@@ -148,6 +200,30 @@ describe('components/InputSelect', function() {
       expect(
         findRenderedDOMElementWithClass(renderedTree, 'options')
       ).not.to.exist;
+    });
+
+
+    it('should hide options on mousedown event outside', function() {
+
+      // given
+      const renderedTree = renderIntoDocument(
+        <DiContainer injector={ injector }>
+          <InputSelect
+            options={ OPTIONS } />
+        </DiContainer>
+      );
+
+      const input = findRenderedDOMElementWithClass(renderedTree, 'dms-input');
+
+      triggerClick(input);
+
+      // when
+      triggerMouseEvent(testContainer, 'mousedown');
+
+      // then
+      const options = findRenderedDOMElementWithClass(renderedTree, 'options');
+
+      expect(options).to.not.exist;
     });
 
 
@@ -361,6 +437,44 @@ describe('components/InputSelect', function() {
 
   });
 
+
+  describe('integration', function() {
+
+    it('should not allow the mousedown events to propagate when selecting option',
+      function() {
+
+        // given
+        const injector = createInjector({
+          keyboard: getKeyboardMock(testContainer),
+          renderer: getRendererMock(testContainer)
+        });
+
+        const spy = sinon.spy();
+        const renderedTree = renderIntoDocument(
+          <DiContainer injector={ injector } onMousedown={ spy }>
+            <InputSelect
+              options={ OPTIONS }
+            />
+          </DiContainer>
+        );
+
+        // when
+        const input = findRenderedDOMElementWithClass(renderedTree, 'dms-input');
+
+        triggerClick(input);
+
+        const option = findRenderedDOMElementWithClass(renderedTree, 'option');
+
+        // when
+        triggerMouseEvent(option, 'mousedown');
+        triggerMouseEvent(option, 'mouseup');
+        triggerMouseEvent(option, 'click');
+
+        // then
+        expect(spy).to.not.have.been.called;
+      }
+    );
+  });
 });
 
 // helpers //////////

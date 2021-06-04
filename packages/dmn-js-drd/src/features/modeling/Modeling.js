@@ -2,57 +2,38 @@ import inherits from 'inherits';
 
 import BaseModeling from 'diagram-js/lib/features/modeling/Modeling';
 
-import UpdatePropertiesHandler from './cmd/UpdatePropertiesHandler.js';
 import IdClaimHandler from './cmd/IdClaimHandler.js';
+import UpdateLabelHandler from '../label-editing/cmd/UpdateLabelHandler.js';
+import UpdatePropertiesHandler from './cmd/UpdatePropertiesHandler.js';
 
 
 /**
- * DMN 1.1 modeling features activator
+ * DMN modeling.
  *
  * @param {Canvas} canvas
- * @param {EventBus} eventBus
- * @param {ElementFactory} elementFactory
  * @param {CommandStack} commandStack
  * @param {DrdRules} drdRules
+ * @param {ElementFactory} elementFactory
+ * @param {EventBus} eventBus
  */
 export default function Modeling(
     canvas,
-    eventBus,
-    elementFactory,
-    commandStack,
-    drdRules) {
-
+    drdRules,
+    injector
+) {
   this._canvas = canvas;
   this._drdRules = drdRules;
 
-  BaseModeling.call(this, eventBus, elementFactory, commandStack);
+  injector.invoke(BaseModeling, this);
 }
 
 inherits(Modeling, BaseModeling);
 
 Modeling.$inject = [
   'canvas',
-  'eventBus',
-  'elementFactory',
-  'commandStack',
-  'drdRules'
+  'drdRules',
+  'injector'
 ];
-
-Modeling.prototype.getHandlers = function() {
-  var handlers = BaseModeling.prototype.getHandlers.call(this);
-
-  handlers['element.updateProperties'] = UpdatePropertiesHandler;
-  handlers['id.updateClaim'] = IdClaimHandler;
-
-  return handlers;
-};
-
-Modeling.prototype.updateProperties = function(element, properties) {
-  this._commandStack.execute('element.updateProperties', {
-    element: element,
-    properties: properties
-  });
-};
 
 Modeling.prototype.claimId = function(id, moddleElement) {
   this._commandStack.execute('id.updateClaim', {
@@ -62,16 +43,7 @@ Modeling.prototype.claimId = function(id, moddleElement) {
   });
 };
 
-
-Modeling.prototype.unclaimId = function(id, moddleElement) {
-  this._commandStack.execute('id.updateClaim', {
-    id: id,
-    element: moddleElement
-  });
-};
-
 Modeling.prototype.connect = function(source, target, attrs, hints) {
-
   var drdRules = this._drdRules,
       rootElement = this._canvas.getRootElement();
 
@@ -80,4 +52,37 @@ Modeling.prototype.connect = function(source, target, attrs, hints) {
   }
 
   return this.createConnection(source, target, attrs, rootElement, hints);
+};
+
+Modeling.prototype.getHandlers = function() {
+  var handlers = BaseModeling.prototype.getHandlers.call(this);
+
+  handlers['id.updateClaim'] = IdClaimHandler;
+  handlers['element.updateLabel'] = UpdateLabelHandler;
+  handlers['element.updateProperties'] = UpdatePropertiesHandler;
+
+  return handlers;
+};
+
+Modeling.prototype.unclaimId = function(id, moddleElement) {
+  this._commandStack.execute('id.updateClaim', {
+    id: id,
+    element: moddleElement
+  });
+};
+
+Modeling.prototype.updateProperties = function(element, properties) {
+  this._commandStack.execute('element.updateProperties', {
+    element: element,
+    properties: properties
+  });
+};
+
+Modeling.prototype.updateLabel = function(element, newLabel, newBounds, hints) {
+  this._commandStack.execute('element.updateLabel', {
+    element: element,
+    newLabel: newLabel,
+    newBounds: newBounds,
+    hints: hints || {}
+  });
 };

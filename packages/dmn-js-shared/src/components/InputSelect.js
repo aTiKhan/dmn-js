@@ -30,7 +30,7 @@ export default class InputSelect extends Component {
   }
 
   componentDidMount() {
-    document.addEventListener('click', this.onGlobalClick);
+    document.addEventListener('mousedown', this.onGlobalClick);
     document.addEventListener('focusin', this.onFocusChanged);
 
     this.keyboard.addListener(this.onKeyboard);
@@ -38,7 +38,7 @@ export default class InputSelect extends Component {
 
   componentWillUnmount() {
     document.removeEventListener('focusin', this.onFocusChanged);
-    document.removeEventListener('click', this.onGlobalClick);
+    document.removeEventListener('mousedown', this.onGlobalClick);
 
     this.keyboard.removeListener(this.onKeyboard);
 
@@ -74,13 +74,27 @@ export default class InputSelect extends Component {
       return;
     }
 
-    const { top, left, width, height } = this.inputNode.getBoundingClientRect();
+    const optionsBounds = this.getOptionsBounds();
 
-    assign(this._portalEl.style, {
-      top: `${top + height}px`,
+    assign(this._portalEl.style, optionsBounds);
+  }
+
+  getOptionsBounds() {
+    const container = this.renderer.getContainer();
+    const { top: containerTop, left: containerLeft } = container.getBoundingClientRect();
+
+    const {
+      top: inputTop, left: inputLeft, width, height
+    } = this.inputNode.getBoundingClientRect();
+
+    const top = inputTop + height - containerTop + container.scrollTop;
+    const left = inputLeft - containerLeft + container.scrollLeft;
+
+    return {
+      top: `${top}px`,
       left: `${left}px`,
       width: `${width}px`
-    });
+    };
   }
 
   addPortalEl() {
@@ -89,10 +103,15 @@ export default class InputSelect extends Component {
     const container = this.renderer.getContainer();
 
     container.appendChild(this._portalEl);
+
+    // suppress mousedown event propagation to handle click events inside the component
+    this._portalEl.addEventListener('mousedown', stopPropagation);
   }
 
   removePortalEl() {
     if (this._portalEl) {
+      this._portalEl.removeEventListener('mousedown', stopPropagation);
+
       domRemove(this._portalEl);
 
       this._portalEl = null;
@@ -284,7 +303,8 @@ export default class InputSelect extends Component {
     const {
       className,
       options,
-      noInput
+      noInput,
+      title
     } = this.props;
 
     const {
@@ -298,6 +318,7 @@ export default class InputSelect extends Component {
 
     return (
       <div
+        title={ title }
         ref={ node => this.parentNode = node }
         className={ [ className || '', 'dms-input-select' ].join(' ') }
         onClick={ this.onInputClick }>
@@ -333,3 +354,9 @@ export default class InputSelect extends Component {
 }
 
 InputSelect.$inject = [ 'keyboard', 'renderer' ];
+
+
+// helper ////
+function stopPropagation(event) {
+  event.stopPropagation();
+}

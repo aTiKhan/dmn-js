@@ -2,6 +2,8 @@ import EventBus from 'diagram-js/lib/core/EventBus';
 
 import DmnModdle from 'dmn-moddle';
 
+import CamundaModdle from 'camunda-dmn-moddle/resources/camunda.json';
+
 import {
   domify,
   query as domQuery,
@@ -11,6 +13,10 @@ import {
 import {
   assign,
   debounce,
+  every,
+  find,
+  isDefined,
+  isFunction,
   isNumber
 } from 'min-dash';
 
@@ -47,7 +53,7 @@ export default class Manager {
   }
 
   /**
-   * Parse and render a DMN 1.1 diagram.
+   * Parse and render a DMN diagram.
    *
    * Once finished the viewer reports back the result to the
    * provided callback function with (err, warnings).
@@ -64,9 +70,9 @@ export default class Manager {
    *
    * You can use these events to hook into the life-cycle.
    *
-   * @param {String} xml the DMN 1.1 xml
+   * @param {string} xml the DMN xml
    * @param {Object} [options]
-   * @param {Boolean} [options.open=true]
+   * @param {boolean} [options.open=true]
    * @param {Function} [done] invoked with (err, warnings=[])
    */
   importXML(xml, options, done) {
@@ -99,7 +105,7 @@ export default class Manager {
       this._setDefinitions(definitions);
 
       if (err) {
-        err = checkValidationError(err);
+        err = checkDMNCompatibilityError(err, xml) || checkValidationError(err) || err;
       }
 
       if (err || !options.open) {
@@ -160,8 +166,8 @@ export default class Manager {
   }
 
   /**
-   * Export the currently displayed DMN 1.1 diagram as
-   * a DMN 1.1 XML document.
+   * Export the currently displayed DMN diagram as
+   * a DMN XML document.
    *
    * ## Life-Cycle Events
    *
@@ -174,8 +180,8 @@ export default class Manager {
    * You can use these events to hook into the life-cycle.
    *
    * @param {Object} [options] export options
-   * @param {Boolean} [options.format=false] output formated XML
-   * @param {Boolean} [options.preamble=true] output preamble
+   * @param {boolean} [options.format=false] output formated XML
+   * @param {boolean} [options.preamble=true] output preamble
    * @param {Function} done invoked with (err, xml)
    */
   saveXML(options, done) {
@@ -221,8 +227,8 @@ export default class Manager {
    *
    * Remove a previously added listener via {@link #off(event, callback)}.
    *
-   * @param {String} event
-   * @param {Number} [priority]
+   * @param {string} event
+   * @param {number} [priority]
    * @param {Function} callback
    * @param {Object} [that]
    */
@@ -233,7 +239,7 @@ export default class Manager {
   /**
    * De-register an event listener
    *
-   * @param {String} event
+   * @param {string} event
    * @param {Function} callback
    */
   off(...args) {
@@ -243,8 +249,8 @@ export default class Manager {
   /**
    * Register a listener to be invoked once only.
    *
-   * @param {String} event
-   * @param {Number} [priority]
+   * @param {string} event
+   * @param {number} [priority]
    * @param {Function} callback
    * @param {Object} [that]
    */
@@ -349,11 +355,13 @@ export default class Manager {
 
     var viewProviders = this._getViewProviders();
 
-    var displayableElements = [ definitions, ...(definitions.drgElements || []) ];
+    var displayableElements = [ definitions, ...(definitions.drgElement || []) ];
 
     // compute list of available views
-    this._views = displayableElements.reduce((views, element) => {
+    var views = this._views,
+        newViews = [];
 
+    for (var element of displayableElements) {
       var provider = find(viewProviders, function(provider) {
         if (typeof provider.opens === 'string') {
           return provider.opens === element.$type;
@@ -363,39 +371,54 @@ export default class Manager {
       });
 
       if (!provider) {
-        return views;
+        continue;
       }
 
       var view = {
         element,
+        id: element.id,
+        name: element.name,
         type: provider.id
       };
 
-      return [
-        ...views,
-        view
-      ];
-    }, []);
+      newViews.push(view);
+    }
 
     var activeView = this._activeView,
         newActiveView;
 
     if (activeView) {
-      // check the new active view
-      newActiveView = find(this._views, function(v) {
-        return viewsEqual(activeView, v);
-      }) || this._getInitialView(this._views);
 
-      if (viewsEqual(activeView, newActiveView)) {
-        // active view changed
-        this._activeView = newActiveView;
-      } else {
-        // active view got deleted
+      // check the new active view
+      newActiveView = find(newViews, function(view) {
+        return viewsEqual(activeView, view);
+      }) || this._getInitialView(newViews);
+
+      if (!newActiveView) {
         return this._switchView(null);
       }
     }
 
-    this._viewsChanged();
+    // Views have changed if
+    // active view has changed OR
+    // number of views has changed OR
+    // not all views equal
+    var activeViewChanged = !viewsEqual(activeView, newActiveView)
+      || viewNameChanged(activeView, newActiveView);
+
+    var viewsChanged = views.length !== newViews.length
+        || !every(newViews, function(newView) {
+          return find(views, function(view) {
+            return viewsEqual(view, newView) && !viewNameChanged(view, newView);
+          });
+        });
+
+    this._activeView = newActiveView;
+    this._views = newViews;
+
+    if (activeViewChanged || viewsChanged) {
+      this._viewsChanged();
+    }
   }
 
   _getInitialView(views) {
@@ -510,11 +533,13 @@ export default class Manager {
    * Emit an event.
    */
   _emit(...args) {
-    this._eventBus.fire(...args);
+    return this._eventBus.fire(...args);
   }
 
   _createModdle(options) {
-    return new DmnModdle(options.moddleExtensions || {});
+    return new DmnModdle(assign({
+      camunda: CamundaModdle
+    }, options.moddleExtensions));
   }
 
   /**
@@ -542,48 +567,80 @@ function ensureUnit(val) {
   return val + (isNumber(val) ? 'px' : '');
 }
 
+function checkDMNCompatibilityError(err, xml) {
+
+  // check if we can indicate opening of old DMN 1.1 or DMN 1.2 diagrams
+
+  if (err.message !== 'failed to parse document as <dmn:Definitions>') {
+    return null;
+  }
+
+  var olderDMNVersion = (
+    (xml.indexOf('"http://www.omg.org/spec/DMN/20151101/dmn.xsd"') !== -1 && '1.1') ||
+    (xml.indexOf('"http://www.omg.org/spec/DMN/20180521/MODEL/"') !== -1 && '1.2')
+  );
+
+  if (!olderDMNVersion) {
+    return null;
+  }
+
+  err = new Error(
+    'unsupported DMN ' + olderDMNVersion + ' file detected; ' +
+    'only DMN 1.3 files can be opened'
+  );
+
+  console.error(
+    'Cannot open what looks like a DMN ' + olderDMNVersion + ' diagram. ' +
+    'Please refer to https://bpmn.io/l/dmn-compatibility.html ' +
+    'to learn how to make the toolkit compatible with older DMN files',
+    err
+  );
+
+  return err;
+}
+
 function checkValidationError(err) {
 
-  // check if we can help the user by indicating wrong DMN 1.1 xml
+  // check if we can help the user by indicating wrong DMN 1.3 xml
   // (in case he or the exporting tool did not get that right)
 
   var pattern = /unparsable content <([^>]+)> detected([\s\S]*)$/,
       match = pattern.exec(err.message);
 
-  if (match) {
-    err.message =
-      'unparsable content <' + match[1] + '> detected; ' +
-      'this may indicate an invalid DMN 1.1 diagram file' + match[2];
+  if (!match) {
+    return null;
   }
+
+  err.message =
+    'unparsable content <' + match[ 1 ] + '> detected; ' +
+    'this may indicate an invalid DMN 1.3 diagram file' + match[ 2 ];
 
   return err;
 }
 
-function find(arr, fn) {
-  return arr.filter(fn)[0];
-}
-
-
 function viewsEqual(a, b) {
-
-  if (typeof a === 'undefined') {
-    if (typeof b === 'undefined') {
+  if (!isDefined(a)) {
+    if (!isDefined(b)) {
       return true;
     } else {
       return false;
     }
   }
 
-  if (typeof b === 'undefined') {
+  if (!isDefined(b)) {
     return false;
   }
 
-  // compare by element _or_ element ID equality
-  return a.element === b.element || a.element.id === b.element.id;
+  // compare by element OR element ID equality
+  return a.element === b.element || a.id === b.id;
+}
+
+function viewNameChanged(a, b) {
+  return !a || !b || a.name !== b.name;
 }
 
 function safeExecute(viewer, method) {
-  if (typeof viewer[method] === 'function') {
-    viewer[method]();
+  if (isFunction(viewer[ method ])) {
+    viewer[ method ]();
   }
 }

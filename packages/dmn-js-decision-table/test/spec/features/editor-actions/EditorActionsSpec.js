@@ -1,12 +1,12 @@
 import { bootstrapModeler, inject } from 'test/helper';
 
 import simpleXML from '../../simple.dmn';
+import noInputsXML from '../../no-inputs.dmn';
 
 import CoreModule from 'src/core';
 import EditorActionsModule from 'src/features/editor-actions';
 import ModelingModule from 'src/features/modeling';
-import DecisionRulesModule from 'src/features/decision-rules';
-
+import RulesEditorModule from 'src/features/decision-rules/editor';
 
 describe('features/editor-actions', function() {
 
@@ -17,7 +17,7 @@ describe('features/editor-actions', function() {
       CoreModule,
       EditorActionsModule,
       ModelingModule,
-      DecisionRulesModule
+      RulesEditorModule
     ]
   }));
 
@@ -590,6 +590,95 @@ describe('features/editor-actions', function() {
     ]);
   }));
 
+
+  it('selectCellAbove', inject(function(editorActions, selection) {
+
+    // given
+    selection.select('inputEntry3');
+
+    // when
+    editorActions.trigger('selectCellAbove');
+
+    // then
+    var currentSelection = selection.get();
+
+    expect(currentSelection.id).to.equal('inputEntry1');
+  }));
+
+
+  it('selectCellAbove - none available', inject(function(editorActions, selection) {
+
+    // given
+    selection.select('inputEntry1');
+
+    // when
+    editorActions.trigger('selectCellAbove');
+
+    // then
+    var currentSelection = selection.get();
+
+    expect(currentSelection.id).to.equal('inputEntry1');
+  }));
+
+
+  it('selectCellBelow', inject(function(editorActions, selection) {
+
+    // given
+    selection.select('inputEntry1');
+
+    // when
+    editorActions.trigger('selectCellBelow');
+
+    // then
+    var currentSelection = selection.get();
+
+    expect(currentSelection.id).to.equal('inputEntry3');
+  }));
+
+
+  it('selectCellBelow - none available', inject(function(editorActions, selection) {
+
+    // given
+    selection.select('inputEntry7');
+
+    // when
+    editorActions.trigger('selectCellBelow');
+
+    // then
+    var currentSelection = selection.get();
+
+    expect(currentSelection.id).to.equal('inputEntry7');
+  }));
+
+
+
+  describe('missing inputs', function() {
+
+    beforeEach(bootstrapModeler(noInputsXML, {
+      modules: [
+        CoreModule,
+        EditorActionsModule,
+        ModelingModule,
+        RulesEditorModule
+      ]
+    }));
+
+    it('should add output if inputs are missing', inject(function(sheet, editorActions) {
+
+      // given
+      const root = sheet.getRoot();
+      const existingOutput = root.cols[0];
+
+      // when
+      const newOutput = editorActions.trigger('addOutput');
+
+      // then
+      expectOrder(root.cols, [
+        existingOutput,
+        newOutput
+      ]);
+    }));
+  });
 });
 
 

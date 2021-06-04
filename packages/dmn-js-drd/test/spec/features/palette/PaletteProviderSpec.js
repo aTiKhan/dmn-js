@@ -17,7 +17,11 @@ describe('features/palette', function() {
 
   var diagramXML = require('../../../fixtures/dmn/input-data.dmn');
 
-  var testModules = [ coreModule, modelingModule, paletteModule ];
+  var testModules = [
+    coreModule,
+    modelingModule,
+    paletteModule
+  ];
 
   beforeEach(bootstrapModeler(diagramXML, { modules: testModules }));
 
@@ -29,7 +33,21 @@ describe('features/palette', function() {
     var entries = domQueryAll('.entry', paletteElement);
 
     // then
-    expect(entries.length).to.equal(5);
+    expect(entries.length).to.equal(6);
+  }));
+
+
+  it('should provide title for each palette entry', inject(function(canvas) {
+
+    // when
+    var paletteElement = domQuery('.djs-palette', canvas._container);
+    var entries = domQueryAll('.entry', paletteElement);
+
+    // then
+    entries.forEach(function(entry) {
+      expect(entry).to.have.property('title');
+      expect(entry.title).to.have.lengthOf.above(0);
+    });
   }));
 
 });

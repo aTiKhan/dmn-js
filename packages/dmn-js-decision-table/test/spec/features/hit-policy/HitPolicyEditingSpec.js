@@ -1,8 +1,6 @@
 import { bootstrapModeler, inject } from 'test/helper';
 
 import {
-  triggerInputEvent,
-  triggerInputSelectChange,
   triggerClick
 } from 'dmn-js-shared/test/util/EventUtil';
 
@@ -14,6 +12,8 @@ import simpleXML from '../../simple.dmn';
 
 import CoreModule from 'src/core';
 import DecisionTableHeadModule from 'src/features/decision-table-head';
+import DecisionTablePropertiesEditorModule from
+  'src/features/decision-table-properties/editor';
 import HitPolicyEditorModule from 'src/features/hit-policy/editor';
 import ModelingModule from 'src/features/modeling';
 import KeyboardModule from 'src/features/keyboard';
@@ -25,6 +25,7 @@ describe('features/hit-policy - editor', function() {
     modules: [
       CoreModule,
       DecisionTableHeadModule,
+      DecisionTablePropertiesEditorModule,
       HitPolicyEditorModule,
       ModelingModule,
       KeyboardModule
@@ -42,7 +43,7 @@ describe('features/hit-policy - editor', function() {
   it('should render hit policy cell', function() {
 
     // then
-    expect(domQuery('th.hit-policy', testContainer)).to.exist;
+    expect(domQuery('.hit-policy', testContainer)).to.exist;
   });
 
 
@@ -51,110 +52,39 @@ describe('features/hit-policy - editor', function() {
     let inputSelect, root;
 
     beforeEach(inject(function(sheet) {
-      const cell = domQuery('th.hit-policy', testContainer);
-
-      triggerClick(cell);
-
       inputSelect = domQuery('.hit-policy-edit-policy-select', testContainer);
 
       root = sheet.getRoot();
     }));
 
 
-    it('should edit hit policy - input', inject(function(sheet) {
-
-      // given
-      const input = domQuery('.dms-input', inputSelect);
+    it('should edit hit policy', inject(function(sheet) {
 
       // when
-      triggerInputEvent(input, 'foo');
+      triggerClick(inputSelect);
 
-      // then
-      expect(root.businessObject.hitPolicy).to.equal('foo');
-    }));
+      const option = domQuery('.options .option:nth-child(2)', testContainer);
 
-
-    it('should edit hit policy - select', inject(function(sheet) {
-
-      // when
-      triggerInputSelectChange(inputSelect, 'FIRST');
+      triggerClick(option);
 
       // then
       expect(root.businessObject.hitPolicy).to.equal('FIRST');
     }));
 
 
-    describe('aggregation', function() {
+    it('should set hit policy and aggregation', inject(function(sheet) {
 
-      it('should render aggregation select', function() {
+      // when
+      triggerClick(inputSelect);
 
-        // when
-        triggerInputSelectChange(inputSelect, 'COLLECT');
+      const option = domQuery('.options .option:nth-child(7)', testContainer);
 
-        // then
-        expect(domQuery('.hit-policy-edit-operator-select', testContainer)).to.exist;
-      });
+      triggerClick(option);
 
-
-      it('should edit aggregation - input', inject(function(sheet) {
-
-        // given
-        triggerInputSelectChange(inputSelect, 'COLLECT');
-
-        const aggregationInputSelect = domQuery(
-          '.hit-policy-edit-operator-select',
-          testContainer
-        );
-
-        const input = domQuery('.dms-input', aggregationInputSelect);
-
-        // when
-        triggerInputEvent(input, 'foo');
-
-        // then
-        expect(root.businessObject.aggregation).to.equal('foo');
-      }));
-
-
-      it('should edit aggregation - select', inject(function(sheet) {
-
-        // given
-        triggerInputSelectChange(inputSelect, 'COLLECT');
-
-        const aggregationInputSelect = domQuery(
-          '.hit-policy-edit-operator-select',
-          testContainer
-        );
-
-        // when
-        triggerInputSelectChange(aggregationInputSelect, 'SUM');
-
-        // then
-        expect(root.businessObject.aggregation).to.equal('SUM');
-      }));
-
-
-      it('should remove aggregation', inject(function(sheet) {
-
-        // given
-        triggerInputSelectChange(inputSelect, 'COLLECT');
-
-        const aggregationSelect = domQuery(
-          '.hit-policy-edit-operator-select',
-          testContainer
-        );
-
-        triggerInputSelectChange(aggregationSelect, 'SUM');
-
-        // when
-        triggerInputSelectChange(inputSelect, 'FIRST');
-
-        // then
-        expect(root.businessObject.aggregation).to.not.exist;
-      }));
-
-    });
-
+      // then
+      expect(root.businessObject.hitPolicy).to.equal('COLLECT');
+      expect(root.businessObject.aggregation).to.equal('MIN');
+    }));
   });
 
 });

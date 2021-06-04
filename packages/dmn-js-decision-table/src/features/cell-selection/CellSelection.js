@@ -66,8 +66,6 @@ export default function CellSelection(
     const focussed = !event.defaultPrevented;
 
     realSelect(elementId, focussed);
-
-    event.stopPropagation();
   }
 
   function focus(event) {
@@ -158,7 +156,7 @@ export default function CellSelection(
   /**
    * Return true if a cell is currently selected.
    *
-   * @return {Boolean}
+   * @return {boolean}
    */
   this.isCellSelected = function() {
     return !!lastSelection;
@@ -167,7 +165,7 @@ export default function CellSelection(
   /**
    * Get the currently active cellSelection.
    *
-   * @return {String} selection
+   * @return {string} selection
    */
   this.getCellSelection = function() {
     return lastSelection;
@@ -179,9 +177,9 @@ export default function CellSelection(
    * Returns true on success; false on fail (i.e. if no next selection
    * in direction could be found).
    *
-   * @param {String} direction
+   * @param {string} direction
    *
-   * @return {Boolean}
+   * @return {boolean}
    */
   this.selectCell = function(direction) {
 

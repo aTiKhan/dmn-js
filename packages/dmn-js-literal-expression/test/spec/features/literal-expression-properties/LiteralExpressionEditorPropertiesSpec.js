@@ -5,6 +5,8 @@ import {
   triggerInputSelectChange
 } from 'dmn-js-shared/test/util/EventUtil';
 
+import ExpressionLanguagesModule from 'dmn-js-shared/lib/features/expression-languages';
+
 import {
   query as domQuery
 } from 'min-dom';
@@ -26,6 +28,7 @@ describe('literal expression properties editor', function() {
     modules: [
       CoreModule,
       LiteralExpressionPropertiesEditorModule,
+      ExpressionLanguagesModule,
       ModelingModule
     ],
     debounceInput: false
@@ -114,7 +117,7 @@ describe('literal expression properties editor', function() {
     triggerInputEvent(input, 'foo');
 
     // then
-    expect(viewer.getDecision().literalExpression.expressionLanguage)
+    expect(viewer.getDecision().decisionLogic.expressionLanguage)
       .to.equal('foo');
   }));
 
@@ -128,7 +131,7 @@ describe('literal expression properties editor', function() {
     triggerInputSelectChange(inputSelect, 'javascript', testContainer);
 
     // then
-    expect(viewer.getDecision().literalExpression.expressionLanguage)
+    expect(viewer.getDecision().decisionLogic.expressionLanguage)
       .to.equal('javascript');
   }));
 
@@ -146,7 +149,7 @@ describe('literal expression properties editor', function() {
     triggerInputEvent(input, '');
 
     // then
-    expect(viewer.getDecision().literalExpression.expressionLanguage)
+    expect(viewer.getDecision().decisionLogic.expressionLanguage)
       .to.not.exist;
   }));
 

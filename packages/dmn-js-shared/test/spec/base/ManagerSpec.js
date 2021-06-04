@@ -1,9 +1,12 @@
+/* global sinon */
+
 import Manager from 'src/base/Manager';
 
 import TestView from './TestView';
 
 import { spy } from 'sinon';
 
+import { find } from 'min-dash';
 
 class TestViewer extends Manager {
 
@@ -33,6 +36,9 @@ const DRD_VIEW = {
 
 
 var diagramXML = require('./diagram.dmn');
+
+var dmn_11 = require('./dmn-11.dmn');
+var dmn_12 = require('./dmn-12.dmn');
 
 
 describe('Manager', function() {
@@ -108,6 +114,7 @@ describe('Manager', function() {
         var events = [];
 
         viewer.on('attach', function(event) {
+
           // log event type + event arguments
           events.push(event);
         });
@@ -129,6 +136,7 @@ describe('Manager', function() {
         var events = [];
 
         viewer.on('detach', function(event) {
+
           // log event type + event arguments
           events.push(event);
         });
@@ -155,6 +163,7 @@ describe('Manager', function() {
           'import.render.complete',
           'import.done'
         ], function(e) {
+
           // log event type + event arguments
           events.push([
             e.type,
@@ -182,7 +191,39 @@ describe('Manager', function() {
 
           done(err);
         });
+      });
 
+
+      it('should accept xml modifications on <import.parse.start>', function(done) {
+
+        // given
+        var viewer = new TestViewer();
+
+        var findElement = function(elements, id) {
+          return !!find(elements, function(element) {
+            return element.id === id;
+          });
+        };
+
+        viewer.once('import.parse.start', function(event) {
+          var xml = event.xml;
+
+          return xml.replace('dish-decision', 'dish-decision1');
+        });
+
+        viewer.on('import.parse.complete', function(event) {
+          var definitions = event.definitions,
+              drgElements = definitions.get('drgElement');
+
+          // then
+          expect(findElement(drgElements, 'dish-decision')).to.be.false;
+          expect(findElement(drgElements, 'dish-decision1')).to.be.true;
+
+          done();
+        });
+
+        // when
+        viewer.importXML(diagramXML);
       });
 
 
@@ -232,6 +273,70 @@ describe('Manager', function() {
 
             manager.open(manager.getViews()[1]);
           });
+        });
+
+
+        it('should NOT emit if no changes', function() {
+
+          // given
+          var manager = new TestViewer();
+
+          manager.once('import.done', function() {
+            const viewsChangedSpy = sinon.spy(manager, '_viewsChanged');
+
+            const dishDecisionView = manager.getViews().find(({ id }) => {
+              return id === 'dish-decision';
+            });
+
+            manager.open(dishDecisionView);
+
+            // assume
+            expect(manager.getActiveView().id).to.equal('dish-decision');
+
+            // when
+            manager._updateViews();
+
+            // then
+            expect(viewsChangedSpy).to.have.been.called;
+
+            expect(manager.getActiveView().id).to.equal('dish-decision');
+            expect(manager.getViews()).to.length(4);
+          });
+
+          manager.importXML(diagramXML);
+        });
+
+
+        it('should emit if name changed', function() {
+
+          // given
+          var manager = new TestViewer();
+
+          manager.once('import.done', function() {
+            const viewsChangedSpy = sinon.spy(manager, '_viewsChanged');
+
+            const dishDecisionView = manager.getViews().find(({ id }) => {
+              return id === 'dish-decision';
+            });
+
+            manager.open(dishDecisionView);
+
+            // assume
+            expect(manager.getActiveView().id).to.equal('dish-decision');
+
+            // when
+            dishDecisionView.element.name = 'Foo';
+
+            manager._updateViews();
+
+            // then
+            expect(viewsChangedSpy).to.have.been.called;
+
+            expect(manager.getActiveView().id).to.equal('dish-decision');
+            expect(manager.getViews()).to.length(4);
+          });
+
+          manager.importXML(diagramXML);
         });
 
       });
@@ -471,6 +576,7 @@ describe('Manager', function() {
         'saveXML.serialized',
         'saveXML.done'
       ], function(e) {
+
         // log event type + event arguments
         events.push([
           e.type,
@@ -559,6 +665,48 @@ describe('Manager', function() {
 
       done();
     });
+  });
+
+
+  describe('DMN compatibility', function() {
+
+    it('should indicate DMN 1.1 incompatibility', function(done) {
+
+      var dummy = new TestViewer();
+
+      dummy.importXML(dmn_11, function(err) {
+
+        if (!err) {
+          return done(new Error('expected error'));
+        }
+
+        expect(err.message).to.match(
+          /unsupported DMN 1\.1 file detected; only DMN 1\.3 files can be opened/
+        );
+
+        done();
+      });
+    });
+
+
+    it('should indicate DMN 1.2 incompatibility', function(done) {
+
+      var dummy = new TestViewer();
+
+      dummy.importXML(dmn_12, function(err) {
+
+        if (!err) {
+          return done(new Error('expected error'));
+        }
+
+        expect(err.message).to.match(
+          /unsupported DMN 1\.2 file detected; only DMN 1\.3 files can be opened/
+        );
+
+        done();
+      });
+    });
+
   });
 
 });

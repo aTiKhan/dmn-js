@@ -26,7 +26,7 @@ export default class Modeling {
 
   static _getHandlers() {
     return {
-      'updateProperties': UpdatePropertiesHandler
+      'element.updateProperties': UpdatePropertiesHandler
     };
   }
 
@@ -44,7 +44,7 @@ export default class Modeling {
       }
     };
 
-    this._commandStack.execute('updateProperties', context);
+    this._commandStack.execute('element.updateProperties', context);
   }
 
   editDecisionId(id) {
@@ -57,12 +57,12 @@ export default class Modeling {
       }
     };
 
-    this._commandStack.execute('updateProperties', context);
+    this._commandStack.execute('element.updateProperties', context);
   }
 
   editLiteralExpressionText(text) {
     const decision = this.getDecision(),
-          literalExpression = decision.literalExpression;
+          literalExpression = decision.decisionLogic;
 
     const context = {
       element: literalExpression,
@@ -71,12 +71,12 @@ export default class Modeling {
       }
     };
 
-    this._commandStack.execute('updateProperties', context);
+    this._commandStack.execute('element.updateProperties', context);
   }
 
   editExpressionLanguage(expressionLanguage) {
     const decision = this.getDecision(),
-          literalExpression = decision.literalExpression;
+          literalExpression = decision.decisionLogic;
 
     const context = {
       element: literalExpression,
@@ -85,7 +85,7 @@ export default class Modeling {
       }
     };
 
-    this._commandStack.execute('updateProperties', context);
+    this._commandStack.execute('element.updateProperties', context);
   }
 
   editVariableName(name) {
@@ -99,7 +99,7 @@ export default class Modeling {
       }
     };
 
-    this._commandStack.execute('updateProperties', context);
+    this._commandStack.execute('element.updateProperties', context);
   }
 
   editVariableType(typeRef) {
@@ -113,7 +113,7 @@ export default class Modeling {
       }
     };
 
-    this._commandStack.execute('updateProperties', context);
+    this._commandStack.execute('element.updateProperties', context);
   }
 }
 

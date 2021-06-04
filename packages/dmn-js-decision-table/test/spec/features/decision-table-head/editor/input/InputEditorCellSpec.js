@@ -2,7 +2,7 @@ import { bootstrapModeler, inject } from 'test/helper';
 
 import {
   triggerInputEvent,
-  triggerClick
+  triggerMouseEvent
 } from 'dmn-js-shared/test/util/EventUtil';
 
 import { query as domQuery } from 'min-dom';
@@ -42,7 +42,7 @@ describe('decision-table-head/editor - input', function() {
     const cellEl = domQuery(`[data-col-id="${columnId}"]`, testContainer);
 
     // open input editor
-    triggerClick(cellEl);
+    triggerMouseEvent(cellEl, 'dblclick');
 
     // return input editor
     return domQuery('.input-edit', testContainer);
@@ -90,73 +90,14 @@ describe('decision-table-head/editor - input', function() {
   }));
 
 
-  describe('should transform to script', function() {
+  it('should display FEEL per default', function() {
 
-    beforeEach(function() {
-      openEditor('input1');
-    });
+    // given
+    const editorEl = openEditor('input1');
+    const inputEl = getControl('.ref-language input', editorEl);
 
-
-    it('via input', inject(function(elementRegistry) {
-
-      // given
-      const inputBo = elementRegistry.get('input1').businessObject;
-
-      const inputEl = getControl('.ref-text', testContainer);
-
-      inputEl.focus();
-
-      // when
-      triggerInputEvent(inputEl, 'foo<br>bar<br>');
-
-      // then
-      expect(inputBo.inputExpression.text).to.equal('foo\nbar');
-      expect(inputBo.inputExpression.expressionLanguage).to.equal('FEEL');
-    }));
-
-
-    it('via link', inject(function(elementRegistry) {
-
-      // given
-      const inputBo = elementRegistry.get('input1').businessObject;
-
-      const makeScriptEl = getControl('.ref-make-script', testContainer);
-
-      // when
-      triggerClick(makeScriptEl);
-
-      // then
-      expect(inputBo.inputExpression.expressionLanguage).to.equal('FEEL');
-    }));
-
-  });
-
-
-  describe('should transform back to expression', function() {
-
-    beforeEach(function() {
-      openEditor('input1');
-    });
-
-
-    it('via input', inject(function(elementRegistry) {
-
-      // given
-      const inputBo = elementRegistry.get('input1').businessObject;
-
-      const inputEl = getControl('.ref-text', testContainer);
-
-      inputEl.focus();
-
-      // when
-      triggerInputEvent(inputEl, 'foo<br>bar<br>');
-      triggerInputEvent(inputEl, 'foo');
-
-      // then
-      expect(inputBo.inputExpression.text).to.equal('foo');
-      expect(inputBo.inputExpression.expressionLanguage).not.to.exist;
-    }));
-
+    // then
+    expect(inputEl).to.have.property('value', 'feel');
   });
 
 
@@ -216,7 +157,7 @@ describe('decision-table-head/editor - input', function() {
       // given
       const inputBo = elementRegistry.get('input1').businessObject;
 
-      const inputEl = getControl('.ref-input-label', testContainer);
+      const inputEl = getControl('.dms-input-label', testContainer);
 
       inputEl.focus();
 
@@ -233,7 +174,7 @@ describe('decision-table-head/editor - input', function() {
       // given
       const inputBo = elementRegistry.get('input1').businessObject;
 
-      const inputEl = getControl('.ref-input-label', testContainer);
+      const inputEl = getControl('.dms-input-label', testContainer);
 
       inputEl.focus();
 

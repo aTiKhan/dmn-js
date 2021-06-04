@@ -14,13 +14,15 @@ import {
 
 
 /**
-* A provider for DMN 1.1 elements context pad
+* A provider for DMN elements context pad
 */
 export default function ContextPadProvider(
     eventBus, contextPad, modeling,
     elementFactory, connect, create,
     rules, popupMenu, canvas,
-    translate) {
+    translate, config, injector) {
+
+  config = config || {};
 
   contextPad.registerProvider(this);
 
@@ -35,6 +37,10 @@ export default function ContextPadProvider(
   this._popupMenu = popupMenu;
   this._canvas = canvas;
   this._translate = translate;
+
+  if (config.autoPlace !== false) {
+    this._autoPlace = injector.get('autoPlace', false);
+  }
 
 
   eventBus.on('create.end', 250, function(event) {
@@ -62,7 +68,9 @@ ContextPadProvider.$inject = [
   'rules',
   'popupMenu',
   'canvas',
-  'translate'
+  'translate',
+  'config.contextPad',
+  'injector'
 ];
 
 
@@ -77,7 +85,8 @@ ContextPadProvider.prototype.getContextPadEntries = function(element) {
       canvas = this._canvas,
       contextPad = this._contextPad,
       rules = this._rules,
-      translate = this._translate;
+      translate = this._translate,
+      autoPlace = this._autoPlace;
 
   var actions = {};
 
@@ -119,9 +128,9 @@ ContextPadProvider.prototype.getContextPadEntries = function(element) {
   /**
   * Create an append action
   *
-  * @param {String} type
-  * @param {String} className
-  * @param {String} [title]
+  * @param {string} type
+  * @param {string} className
+  * @param {string} [title]
   * @param {Object} [options]
   *
   * @return {Object} descriptor
@@ -133,31 +142,38 @@ ContextPadProvider.prototype.getContextPadEntries = function(element) {
       title = translate('Append {type}', { type: type.replace(/^dmn:/, '') });
     }
 
-    function appendListener(event, element) {
+    function appendStart(event, element) {
 
       var shape = elementFactory.createShape(assign({ type: type }, options));
-      create.start(event, shape, element);
+
+      create.start(event, shape, {
+        source: element,
+        hints: {
+          connectionTarget: element
+        }
+      });
     }
+
+    var append = autoPlace ? function(event, element) {
+      var shape = elementFactory.createShape(assign({ type: type }, options));
+
+      autoPlace.append(element, shape, {
+        connectionTarget: element
+      });
+    } : appendStart;
 
     return {
       group: 'model',
       className: className,
       title: title,
       action: {
-        dragstart: appendListener,
-        click: appendListener
+        dragstart: appendStart,
+        click: append
       }
     };
   }
 
-  if (
-    isAny(businessObject, [
-      'dmn:InputData',
-      'dmn:BusinessKnowledgeModel',
-      'dmn:KnowledgeSource',
-      'dmn:Decision'
-    ])
-  ) {
+  if (is(businessObject, 'dmn:Decision')) {
     assign(actions, {
       'append.decision': appendAction('dmn:Decision', 'dmn-icon-decision')
     });
@@ -165,7 +181,7 @@ ContextPadProvider.prototype.getContextPadEntries = function(element) {
 
   if (
     isAny(businessObject, [
-      'dmn:InputData',
+      'dmn:BusinessKnowledgeModel',
       'dmn:Decision',
       'dmn:KnowledgeSource'
     ])
@@ -178,7 +194,10 @@ ContextPadProvider.prototype.getContextPadEntries = function(element) {
     });
   }
 
-  if (isAny(businessObject, [ 'dmn:BusinessKnowledgeModel', 'dmn:KnowledgeSource' ])) {
+  if (isAny(businessObject, [
+    'dmn:BusinessKnowledgeModel',
+    'dmn:Decision'
+  ])) {
     assign(actions, {
       'append.business-knowledge-model': appendAction(
         'dmn:BusinessKnowledgeModel',
@@ -187,7 +206,7 @@ ContextPadProvider.prototype.getContextPadEntries = function(element) {
     });
   }
 
-  if (isAny(businessObject, [ 'dmn:Decision' ])) {
+  if (isAny(businessObject, [ 'dmn:Decision', 'dmn:KnowledgeSource' ])) {
     assign(actions, {
       'append.input-data': appendAction('dmn:InputData', 'dmn-icon-input-data')
     });
@@ -207,6 +226,22 @@ ContextPadProvider.prototype.getContextPadEntries = function(element) {
         title: translate(
           'Connect using Information/Knowledge' +
           '/Authority Requirement or Association'
+        ),
+        action: {
+          click: startConnect,
+          dragstart: startConnect
+        }
+      }
+    });
+  }
+
+  if (is(businessObject, 'dmn:TextAnnotation')) {
+    assign(actions, {
+      'connect': {
+        group: 'connect',
+        className: 'dmn-icon-connection-multi',
+        title: translate(
+          'Connect using association'
         ),
         action: {
           click: startConnect,
@@ -243,6 +278,7 @@ ContextPadProvider.prototype.getContextPadEntries = function(element) {
   var deleteAllowed = rules.allowed('elements.delete', { elements: [ element ] });
 
   if (isArray(deleteAllowed)) {
+
     // was the element returned as a deletion candidate?
     deleteAllowed = deleteAllowed[0] === element;
   }
